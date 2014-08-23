@@ -1,0 +1,136 @@
+#   AUTO SERVICES RESTART or Stop (autosvcrst)
+#   VERSION: 0.3
+#   Tested on Windows XP, 7
+#   module needed (time, wmi, argparse, win32serviceutil, sys, time)
+#   Created by: Zer0Trac3
+#
+#
+#   This program will shutdown or start services.
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import win32serviceutil as wsu
+#import win32service
+import sys, time
+import argparse
+import wmi
+'''
+This program was developed for Network Defense and CTF competition. 
+    Syntax use
+    
+    -h (help menu)
+    -u (keep services up requires the Name of the service and not the Caption) example autosvcrst -u Apache2.4,mysql,vsftpd
+    -s (keep services down requires the Name of the service and not the Caption) example autosvcrst -u Apache2.4,mysql,vsftpd
+    -l (list all running services) example: autosvcrst -l stop or autosvcrst -l start
+    * compile version will by <programName.exe> 
+
+
+'''
+
+# function check the status of a service and start it if not running
+def manage (action, service):
+    c = wmi.WMI()
+    if action == 'status':
+        if wsu.QueryServiceStatus(service)[1] != 4:
+            for services in c.Win32_Service(Name=service):
+                #added v0.2 (bug fix: System crash if service was disabled)
+                # this will make sure the StartType is set to Automatic before restarting the service
+                services.ChangeStartMode(StartMode='Automatic')
+                print '%s is down restarting NOW' % service
+                wsu.RestartService(service)
+                # sleep must be at least 10 sec. 
+                # Tested 5 sec and it crashes the program
+                time.sleep(30)
+
+# function check the status of a service and stop it if not running
+def StopServices (action, service):
+    c = wmi.WMI()
+    if action == 'status':
+        if wsu.QueryServiceStatus(service)[1] == 4:
+            for services in c.Win32_Service(Name=service):
+                #added v0.3 (bug fix: System crash if service was disabled)
+                # this will make sure the StartType is set to Automatic before restarting the service
+                services.ChangeStartMode(StartMode='Disabled')
+                print '%s is down stopped NOW' % service
+                wsu.StopServiceWithDeps(service)
+                # sleep must be at least 10 sec. 
+                # Tested 5 sec and it crashes the program
+                time.sleep(60)
+
+
+
+# add v0.2
+# This function creates a list of services that are running/stopped with name, caption 
+def ListService(l):
+    l = wmi.WMI ()
+    # only running services check
+    if ServicesList.l=='start':
+        for l in l.Win32_Service ():
+            if l.State == 'Running':
+                print l.Name,'|', l.Caption, '|', l.State
+    # only stop services check
+    elif ServicesList.l=='stop':
+        l = wmi.WMI ()
+        for l in l.Win32_Service ():
+            if l.State == 'Stopped':
+                print l.Name, '|', l.Caption, '|', l.State
+    # All services check
+    elif ServicesList.l =='all':
+        for l in l.Win32_Service ():
+            print l.Name, '|', l.Caption, '|', l.State
+                
+# split the service name input by user
+def split(ServicesList):
+    ServicesList = ServicesList.u.split(',')
+    for services in ServicesList:
+        manage('status', services)
+
+def StopService(ServicesList):
+    ServicesList = ServicesList.s.split(',')
+    for services in ServicesList:
+        StopServices('status', services)
+        
+        
+
+
+# main function
+if __name__ == '__main__':
+
+    # add v0.2 
+    # This parse was added for multiple type of operation
+    p = argparse.ArgumentParser(description='Auto Services Start or Stop')
+    p.add_argument('-u', type=str, 
+                   help='Keeps Services UP and RUNNING. Please separate services by "," *Checks every 30 sec. ex: mysql,apache2.4')
+    p.add_argument('-s', type=str, 
+                   help='Keeps Services DOWN and DISABLED. Please separate services by "," *Check every 1 min. ex: mysql,apache2.4')
+    p.add_argument('-l', type=str, 
+                   help='List all running services with name commands: all, stop, start')
+    ServicesList =p.parse_args()
+    
+    if ServicesList.u is None and ServicesList.l is None and ServicesList.s is None:
+        p.error('\n \nAt least one argument must be supplied.')
+    elif ServicesList.l:
+        ListService(ServicesList)
+        if ServicesList.u:
+            while True:
+                split(ServicesList)
+        elif ServicesList.s:
+            while True:
+                split(ServicesList)
+    elif ServicesList.u:
+        while True:
+            split(ServicesList)
+    elif ServicesList.s:
+        while True:
+            StopService(ServicesList)
