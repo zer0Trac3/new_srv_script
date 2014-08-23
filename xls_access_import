@@ -1,0 +1,111 @@
+import xlrd
+import MySQLdb
+#import book
+
+# Open the workbook and define the worksheet
+#book = book.open_workbook_xls("Flat_file.xls")
+book = xlrd.open_workbook("Flat_file1.xls")
+sheet = book.sheet_by_name("Sheet1")
+
+
+# Establish a MySQL connection
+database = MySQLdb.connect (host="localhost", user = "root", 
+                            passwd = "", db = "perform_import_test")
+
+# Get the cursor, which is used to traverse the database, line by line
+cursor = database.cursor()
+
+
+# Create the INSERT INTO sql query
+query = """INSERT INTO opom_import (Budget Year, Funding Profile, Curr Sys Prof Ind, Funding Scope, System Name, 
+                                    Component, locsr Cat, Bucket Cat, Abc Code, Abc Name, 
+                                    Fe Code, Funding Element Name, Funded Activity, Performing Activity, Location Type, 
+                                    Joint, Assigned Personnel, Competency Code, Task Priority, Multi Year Carryover Rule, 
+                                    Escalate Priority, Adjusted Priority, Readiness Impact, Readiness Allocation, Accept Partial Funding, 
+                                    Accept Partial Funding Pct, Year, Requirement, Maint Qty, Cost Measure, 
+                                    Cost Variation, Unit Cost, Other Costs, Flat Rate Cost, Labor Rate, 
+                                    Work Years, Must Fund, Comments, Impact Stmt) 
+            VALUES (%s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s)"""
+
+# Create a For loop to iterate through each row in the XLS file, starting at row 2 to skip the headers
+for r in range(1, sheet.nrows):
+      Budget_Year = sheet.cell(r,0).value
+      Funding_Profile = sheet.cell(r,1).value
+      Curr_Sys_Prof_Ind = sheet.cell(r,2).value
+      Funding_Scope = sheet.cell(r,3).value
+      System_Name = sheet.cell(r,4).value
+      Component = sheet.cell(r,5).value
+      locsr_Cat = sheet.cell(r,6).value
+      Bucket_Cat = sheet.cell(r,7).value
+      Abc_Code = sheet.cell(r,8).value
+      Abc_Name = sheet.cell(r,9).value
+      Fe_Code = sheet.cell(r,10).value
+      Funding_Element_Name = sheet.cell(r,11).value
+      Funded_Activity = sheet.cell(r,12).value
+      Performing_Activity = sheet.cell(r,13).value
+      Location_Type = sheet.cell(r,14).value
+      Joint = sheet.cell(r,15).value
+      Assigned_Personnel = sheet.cell(r,16).value
+      Competency_Code = sheet.cell(r,17).value
+      Task_Priority = sheet.cell(r,18).value
+      Multi_Year_Carryover_Rule = sheet.cell(r,19).value
+      Escalate_Priority = sheet.cell(r,20).value
+      Adjusted_Priority = sheet.cell(r,21).value
+      Readiness_Impact = sheet.cell(r,22).value
+      Readiness_Allocation = sheet.cell(r,23).value
+      Accept_Partial_Funding = sheet.cell(r,24).value
+      Accept_Partial_Funding_Pct = sheet.cell(r,25).value
+      Year = sheet.cell(r,26).value
+      Requirement = sheet.cell(r,27).value
+      Maint_Qty = sheet.cell(r,28).value
+      Cost_Measure = sheet.cell(r,29).value
+      Cost_Variation = sheet.cell(r,30).value
+      Unit_Cost = sheet.cell(r,31).value
+      Other_Costs = sheet.cell(r,32).value
+      Flat_Rate_Cost = sheet.cell(r,33).value
+      Labor_Rate = sheet.cell(r,34).value
+      Work_Years = sheet.cell(r,35).value
+      Must_Fund = sheet.cell(r,36).value
+      Comments = sheet.cell(r,37).value
+      Impact_Stmt = sheet.cell(r,38).value
+
+
+      # Assign values from each row
+      values = (Budget_Year, Funding_Profile, Curr_Sys_Prof_Ind, Funding_Scope, System_Name, 
+                Component, locsr_Cat, Bucket_Cat, Abc_Code, Abc_Name, 
+                Fe_Code, Funding_Element_Name, Funded_Activity, Performing_Activity, Location_Type, 
+                Joint, Assigned_Personnel, Competency_Code, Task_Priority, Multi_Year_Carryover_Rule, 
+                Escalate_Priority, Adjusted_Priority, Readiness_Impact, Readiness_Allocation, Accept_Partial_Funding, 
+                Accept_Partial_Funding_Pct, Year, Requirement, Maint_Qty, Cost_Measure, 
+                Cost_Variation, Unit_Cost, Other_Costs, Flat_Rate_Cost, Labor_Rate, 
+                Work_Years, Must_Fund, Comments, Impact_Stmt)
+
+
+      # Execute sql Query
+      cursor.execute(query, values)
+
+# Close the cursor
+cursor.close()
+
+# Commit the transaction
+database.commit()
+
+# Close the database connection
+database.close()
+
+# Print results
+print ""
+print "All Done! Bye, for now."
+print ""
+#columns = str(sheet.ncols)
+#rows = str(sheet.nrows)
+#print "I just imported " %2s columns %2s " columns and " %2s rows %2s " rows to MySQL!"
+
+#Hope this is useful. More to come!
